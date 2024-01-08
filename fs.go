@@ -17,13 +17,8 @@ func main() {
 		return
 	}
 	defer file.Close()
-
 	scanner := bufio.NewScanner(file)
-
-	// Set the split function for the scanning operation.
 	scanner.Split(bufio.ScanWords)
-
-	// Scan all words from the file.
 	for scanner.Scan() {
 		words = append(words, scanner.Text())
 	}
@@ -31,18 +26,39 @@ func main() {
 		fmt.Print("file not found")
 		return
 	}
+
 	words = Bin(words)
 	words = Hex(words)
 	words = Up(words)
 	words = Low(words)
 	words = Cap(words)
+	words = transformText(words)
 	words = addSpaces(words)
 	words = formatText(words)
 	words = removeSpaces(words)
 	words = replaceAWithAn(words)
 	words = formatText(words)
 	words = removeExtraSpaces(words)
-	fmt.Println(words)
+
+	outputFile, err := os.Create("result.txt")
+	if err != nil {
+		fmt.Println("Failed to create output file:", err)
+		return
+	}
+	defer outputFile.Close()
+	writer := bufio.NewWriter(outputFile)
+	for _, word := range words {
+		_, err := writer.WriteString(word + " ")
+		if err != nil {
+			fmt.Println("Failed to write word:", err)
+			return
+		}
+	}
+	err = writer.Flush()
+	if err != nil {
+		fmt.Println("Failed to flush writer:", err)
+		return
+	}
 }
 
 func Hex(s []string) []string {
@@ -104,13 +120,14 @@ func Cap(s []string) []string {
 	words := strings.Fields(str)
 	for i, word := range words {
 		if word == "(cap)" && i > 0 {
-			words[i-1] = strings.ToTitle(words[i-1])
+			words[i-1] = strings.Title(words[i-1])
 			words[i] = ""
 		}
 		if word == "(cap)" && i > 999 {
-			words[i-1] = strings.ToTitle(words[i-1])
+			words[i-1] = strings.Title(words[i-1])
 			words[i] = ""
 		}
+
 	}
 	return strings.Fields(strings.Join(words, " "))
 }
@@ -150,9 +167,51 @@ func removeExtraSpaces(input []string) []string {
 
 func replaceAWithAn(s []string) []string {
 	for i := 0; i < len(s)-1; i++ {
-		if strings.ContainsAny(s[i+1], "a e i o u h A E I O U H") {
+		if strings.ContainsAny(s[i+1], "AEIOUHaeiouh") {
 			s[i] = strings.Replace(s[i], "A", "An", -1)
 		}
 	}
 	return s
+}
+
+func transformText(input []string) []string {
+	re := regexp.MustCompile(`(\d+)\)`)
+	for idx, word := range input {
+		switch word {
+		case "(low,":
+			if idx != len(input) && re.MatchString(input[idx+1]) {
+				matches := re.FindStringSubmatch(input[idx+1])
+				numWords, _ := strconv.Atoi(matches[1])
+				for i := idx; i >= idx-numWords && i != -1; i-- {
+					input[i] = strings.ToLower(input[i])
+				}
+				input = append(input[:idx], input[idx+1:]...)
+
+			}
+		case "(up,":
+			if idx != len(input) && re.MatchString(input[idx+1]) {
+				matches := re.FindStringSubmatch(input[idx+1])
+				numWords, _ := strconv.Atoi(matches[1])
+				for i := idx; i >= idx-numWords && i != -1; i-- {
+					input[i] = strings.ToUpper(input[i])
+				}
+				input = append(input[:idx], input[idx+1:]...)
+
+			}
+		case "(cap,":
+			if idx != len(input) && re.MatchString(input[idx+1]) {
+				matches := re.FindStringSubmatch(input[idx+1])
+				numWords, _ := strconv.Atoi(matches[1])
+				for i := idx; i >= idx-numWords && i != -1; i-- {
+					input[i] = strings.Title(input[i])
+				}
+				input = append(input[:idx], input[idx+1:]...)
+			}
+
+		}
+	}
+	temp := strings.Join(input, " ")
+	newStr := re.ReplaceAllString(temp, "")
+	output := strings.Fields(newStr)
+	return output
 }
