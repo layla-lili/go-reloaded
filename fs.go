@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	// "unicode"
+
 )
 
 func main() {
@@ -37,8 +39,10 @@ func main() {
 	words = formatText(words)
 	words = removeSpaces(words)
 	words = replaceAWithAn(words)
+	// words = replaceaWithan(words)
 	words = formatText(words)
 	words = removeExtraSpaces(words)
+
 
 	outputFile, err := os.Create("result.txt")
 	if err != nil {
@@ -132,13 +136,41 @@ func Cap(s []string) []string {
 	return strings.Fields(strings.Join(words, " "))
 }
 
+//  func addSpaces(str []string) []string {
+// 	 re := regexp.MustCompile(`\W([.,!,?,:;])(\s*)(\S*)`)
+// 	temp := strings.Join(str, " ")
+// 	 s := re.ReplaceAllString(temp, "$1$3")
+// 	output := strings.Split(s, " ")
+// 	return output
+//  }
 func addSpaces(str []string) []string {
-	re := regexp.MustCompile(`\W([.,!,?,:;])(\s*)(\S*)`)
+	re := regexp.MustCompile(`(\w)\s*([.,!?:;])\s*(\S*)`)
 	temp := strings.Join(str, " ")
-	s := re.ReplaceAllString(temp, "$1$3")
-	output := strings.Split(s, " ")
+	s := re.ReplaceAllString(temp, "$1$2$3")
+	output := strings.Fields(s)
 	return output
 }
+
+
+//  func addSpaces(s []string) []string {
+// 	stringin := strings.Join(s, " ")
+// 	re := regexp.MustCompile(`(?s)\s*([,.!?:;]+)\s*`)
+// 	result := re.ReplaceAllStringFunc(stringin, func(s string) string {
+//         // Replace single punctuation marks surrounded by whitespace
+//         if len(s) > 1 && (s[0] == ' ' || s[len(s)-1] == ' ') {
+//             return strings.TrimSpace(s) + " "
+//         }
+
+//         return s
+//     })
+// 	return strings.Split(result, " ")
+
+//  }
+
+
+
+
+
 
 func formatText(inputs []string) []string {
 	re := regexp.MustCompile(`\w([...,!?])(\s)(\S*)`)
@@ -165,14 +197,116 @@ func removeExtraSpaces(input []string) []string {
 	return output
 }
 
-func replaceAWithAn(s []string) []string {
-	for i := 0; i < len(s)-1; i++ {
-		if strings.ContainsAny(s[i+1], "AEIOUHaeiouh") {
-			s[i] = strings.Replace(s[i], "A", "An", -1)
+
+
+
+
+
+
+
+
+
+
+func replaceAWithAn(input []string) []string {
+	stringStr := strings.Join(input, " ")
+
+	re := regexp.MustCompile(`(A|a)\s+\b[aeiouh]\w+\b`)
+	result := re.ReplaceAllStringFunc(stringStr, func(s string) string {
+		word := regexp.MustCompile(`\b\w+\b`).FindString(s)
+		if isVowel(word[0]) {
+			if word[0] == 'A' {
+				return "An" + s[1:]
+			} else {
+				return "an" + s[1:]
+			}
 		}
+		return s
+	})
+
+	return strings.Split(result, " ")
 	}
-	return s
+
+func isVowel (c byte) bool{
+	switch c {
+	case 'a','e','i','o','u','h','A','E','I','O','U','H':
+		return true
+	}
+	return false
 }
+// func replaceaWithan(s []string) []string {
+// 	for i := 0; i < len(s)-1; i++ {
+// 		if
+// 		strings.HasPrefix(strings.ToLower(s[1+i]), "a") || 
+// 		strings.HasPrefix(strings.ToLower(s[1+i]), "e") || 
+// 		strings.HasPrefix(strings.ToLower(s[1+i]), "i") ||
+// 	    strings.HasPrefix(strings.ToLower(s[1+i]), "o") ||
+// 		strings.HasPrefix(strings.ToLower(s[1+i]), "h") ||
+// 		strings.HasPrefix(strings.ToLower(s[1+i]), "u") {
+//         s[i] = newFunction(s[i], i)
+// 		}
+// 	}
+// 	return s
+// }
+// func newFunction(s string, i int) string {
+// 	return strings.Replace(s, "a", " an ", -1)
+// }
+
+// func replaceAWithAn(s []string) []string {
+// 	for i := 0; i < len(s)-1; i++ {
+// 		if
+// 	    strings.HasPrefix(strings.ToUpper(s[1+i]), "A") || 
+// 		strings.HasPrefix(strings.ToUpper(s[1+i]), "E") ||
+// 		strings.HasPrefix(strings.ToUpper(s[1+i]), "I") || 
+// 		strings.HasPrefix(strings.ToUpper(s[1+i]), "O") ||
+// 		strings.HasPrefix(strings.ToUpper(s[1+i]), "H") ||
+// 		strings.HasPrefix(strings.ToUpper(s[1+i]), "U") {
+//         s[i] = newFunctions(s[i], i)
+// 		}
+// 	}
+// 	return s
+// }
+// func newFunctions(s string, i int) string {
+// 	return strings.Replace(s, "A", "An", -1)
+// }
+   
+//  func replaceAWithAn(s []string) []string {
+	// 	for i := 0; i < len(s)-1; i++ {
+	// 		// re := regexp.MustCompile(`(\w*)`)
+	// 	if strings.ContainsAny(s[1+i], "A E I O U H a e i o u h") {
+	// 		s[i] = strings.Replace(s[i],"A", "An", -1)
+	// 		s[i] = strings.Replace(s[i],"a", "an", -1)
+
+	// 	}
+	// }
+	// return s
+// 	for i := 0; i < len(s)-1; i++ {
+// 		if s[i] == "A" || s[i] == "a" {
+// 			nextWordFirstRune := []rune(s[i+1])[0]
+// 			if unicode.IsUpper(nextWordFirstRune) {
+// 				s[i] = "An"
+// 			} else {
+// 				s[i] = "an"
+// 			}
+// 		}
+// 	}
+// 	return s
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 func transformText(input []string) []string {
 	re := regexp.MustCompile(`(\d+)\)`)
